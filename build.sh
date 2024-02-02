@@ -18,8 +18,9 @@ fi
 if [ -d .repo ]; then
     if [ "${should_skip_sync}" = "1" ]; then
         echo "Skipping sync"
+    else
+        repo sync ${sync_args}
     fi
-    repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 else
     echo "Repo not initialized, exiting..."
     exit 1
