@@ -33,4 +33,5 @@ fi
 
 # Build the ROM
 . build/envsetup.sh
-${make}
+lunch ${lunch_target}
+${make_cmd}
