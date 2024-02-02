@@ -16,18 +16,17 @@ fi
 
 # Sync the repo
 if [ -d .repo ]; then
-    if [ ${should_skip_sync} = "1" ]; then
+    if [ "${should_skip_sync}" = "1" ]; then
         echo "Skipping sync"
-        exit 0
     fi
     repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 else
-    echo "Repo not initialized"
+    echo "Repo not initialized, exiting..."
     exit 1
 fi
 
 # Apply patches
-if [ -d patches.sh ]; then
+if [ -f patches.sh ]; then
     bash patches.sh
 fi
 
