@@ -7,17 +7,29 @@ source config.env
 if [ -f rom/.repo/manifest.xml ]; then
     echo "Repo already initialized"
     cd rom
-    exit 1
 else
     mkdir -p rom
     cd rom
+    # Init the repo
+    repo init -u ${repo} -b ${repo_branch} --depth=10
 fi
 
-# Init the repo
-repo init -u ${repo} -b ${repo_branch}
-
 # Sync the repo
-repo sync ${sync_flags}
+if [ -d .repo ]; then
+    if [ ${should_skip_sync} = "1" ]; then
+        echo "Skipping sync"
+        exit 0
+    fi
+    repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+else
+    echo "Repo not initialized"
+    exit 1
+fi
+
+# Apply patches
+if [ -d patches.sh ]; then
+    bash patches.sh
+fi
 
 # Build the ROM
 . build/envsetup.sh
