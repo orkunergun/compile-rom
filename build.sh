@@ -101,7 +101,57 @@ if [ "${clean_out}" = "1" ]; then
     rm -rf out/
 fi
 
+# Clone and set telegram stuff
+if [ ! -f "./Telegram/telegram" ]
+then
+  git clone --depth=1 https://github.com/fabianonline/telegram.sh Telegram
+fi
+TELEGRAM=./Telegram/telegram
+
+# Function to send telegram messages
+send_msg()
+{
+  "${TELEGRAM}" -H -D \
+      "$(
+          for POST in "${@}"; do
+              echo "${POST}"
+          done
+      )"
+}
+
+# Send a message to the Telegram channel
+if [ "${TELEGRAM_TOKEN}" != "" ] && [ "${TELEGRAM_CHAT}" != "" ]; then
+    repo_branch=$(git rev-parse --abbrev-ref HEAD)
+    MSG="Build for ${device_codename} started
+- Commit: $(git log --pretty=format:'%h - %s' -n 1)
+- By: ${git_name}"
+    send_msg "${MSG}"
+fi
+
 # Build the ROM
 . build/envsetup.sh
 lunch ${lunch_target}
-${make_cmd}
+${make_cmd} || send_msg "Build failed" && exit 1
+
+# Upload the ROM
+if [ "${PD_UPLOAD}" = "true" ]; then
+    if [ -f "out/target/product/${device_codename}/*.zip" ]; then
+        echo "Uploading the ROM"
+        export FILE_ID="$(curl -sT "out/target/product/${device_codename}/*.zip" https://pixeldrain.com/api/file/ | grep -o '"id":"[^"]*' | awk -F ':"' '{print $2}')"
+        echo "Download the ROM at: https://pixeldrain.com/u/${FILE_ID}"
+    else
+        echo "No ROM to upload"
+    fi
+fi
+
+# Send a final message
+echo "Done"
+
+# Send a message to the Telegram channel
+if [ "${TELEGRAM_TOKEN}" != "" ] && [ "${TELEGRAM_CHAT}" != "" ]; then
+    repo_branch=$(git rev-parse --abbrev-ref HEAD)
+    MSG="Build for ${device_codename} finished
+- Download the ROM at: https://pixeldrain.com/u/${FILE_ID}
+- By: ${git_name}"
+    send_msg "${MSG}"
+fi
