@@ -213,7 +213,11 @@ ${make_cmd} || send_msg "Build failed" && exit 1
 if [ "${PD_UPLOAD}" = "true" ]; then
     if [ -f "out/target/product/${device_codename}/*.zip" ]; then
         echo "[*] Uploading the ROM"
-        export FILE_ID="$(curl -sT "out/target/product/${device_codename}/*.zip" https://pixeldrain.com/api/file/ | grep -o '"id":"[^"]*' | awk -F ':"' '{print $2}')"
+        cd ${main_dir}
+        export TARGET_DIR="out/target/product/${device_codename}"
+        rom_zip="$(python3 ../get_rom_zip.py)"
+        zip_path="$(readlink -f -- ${TARGET_DIR}/${rom_zip})"
+        export FILE_ID="$(curl -sT "${zip_path}" https://pixeldrain.com/api/file/ | grep -o '"id":"[^"]*' | awk -F ':"' '{print $2}')" || echo "[!] Failed to upload the ROM" && send_msg "Failed to upload the ROM"
         echo "[*] Download the ROM at: https://pixeldrain.com/u/${FILE_ID}"
     else
         echo "[!] No ROM to upload"
