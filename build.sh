@@ -26,6 +26,7 @@ if [ -d .repo ]; then
     else
         echo "[*] Syncing the repo"
         repo sync ${sync_args}
+        apply_patches
     fi
 else
     echo "[!] Repo not initialized"
@@ -103,16 +104,19 @@ else
     echo "[!] No extra repos to clone"
 fi
 
-# Apply patches
-if [ -f ../patches.sh ]; then
-    echo "[*] Applying patches"
-    cp ../patches.sh .
-    chmod +x patches.sh
-    ./patches.sh
-    rm patches.sh
-else
-    echo "[!] No patches to apply"
-fi
+# Apply patches function
+apply_patches()
+{
+    if [ -f "../patches.sh" ]; then
+        echo "[*] Applying patches"
+        cp ../patches.sh .
+        chmod +x patches.sh
+        ./patches.sh
+        rm patches.sh
+    else
+        echo "[!] No patches to apply"
+    fi
+}
 
 # Update the device repos
 if [ "${should_update_trees}" = "1" ]; then
@@ -196,6 +200,24 @@ if [ "${TELEGRAM_TOKEN}" != "" ] && [ "${TELEGRAM_CHAT}" != "" ]; then
     send_msg "${MSG}"
 fi
 
+# Upload ROM function
+upload_rom()
+{
+    if [ "${PD_UPLOAD}" = "true" ]; then
+        cd ${main_dir}
+        export TARGET_DIR="out/target/product/${device_codename}"
+        rom_zip="$(python3 ../get_rom_zip.py)"
+        zip_path="$(readlink -f -- ${TARGET_DIR}/${rom_zip})"
+        if [ -f "out/target/product/${device_codename}/${zip_path}" ]; then
+            echo "[*] Uploading the ROM"
+            export FILE_ID="$(curl -sT "${zip_path}" https://pixeldrain.com/api/file/ | grep -o '"id":"[^"]*' | awk -F ':"' '{print $2}')" || echo "[!] Failed to upload the ROM" && send_msg "Failed to upload the ROM"
+            echo "[*] Download the ROM at: https://pixeldrain.com/u/${FILE_ID}"
+        else
+            echo "[!] No ROM to upload"
+        fi
+    fi
+}
+
 # Build the ROM
 echo "[*] Starting the build" && echo "[*] Building ${device_codename}"
 cd ${main_dir}
@@ -210,32 +232,22 @@ fi
 lunch ${lunch_target}
 ${make_cmd} && echo "[*] Build completed successfully" && upload_rom || echo "[!] Build failed"
 
-# Upload the ROM function
-upload_rom()
-{
-    if [ "${PD_UPLOAD}" = "true" ]; then
-        if [ -f "out/target/product/${device_codename}/*.zip" ]; then
-            echo "[*] Uploading the ROM"
-            cd ${main_dir}
-            export TARGET_DIR="out/target/product/${device_codename}"
-            rom_zip="$(python3 ../get_rom_zip.py)"
-            zip_path="$(readlink -f -- ${TARGET_DIR}/${rom_zip})"
-            export FILE_ID="$(curl -sT "${zip_path}" https://pixeldrain.com/api/file/ | grep -o '"id":"[^"]*' | awk -F ':"' '{print $2}')" || echo "[!] Failed to upload the ROM" && send_msg "Failed to upload the ROM"
-            echo "[*] Download the ROM at: https://pixeldrain.com/u/${FILE_ID}"
-        else
-            echo "[!] No ROM to upload"
-        fi
-    fi
-}
-
 # Send a final message
 echo "[*] Done!"
 
 # Send a message to the Telegram channel
 if [ "${TELEGRAM_TOKEN}" != "" ] && [ "${TELEGRAM_CHAT}" != "" ]; then
-    repo_branch=$(git rev-parse --abbrev-ref HEAD)
-    MSG="Build for ${device_codename} finished
+    if [ -z "${FILE_ID}" ]; then
+        repo_branch=$(git rev-parse --abbrev-ref HEAD)
+        MSG="Build for ${device_codename} finished
+- Download the ROM at: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/target/product/${device_codename}/${rom_zip}
+- By: ${git_name}"
+        send_msg "${MSG}"
+    else
+        repo_branch=$(git rev-parse --abbrev-ref HEAD)
+        MSG="Build for ${device_codename} finished
 - Download the ROM at: https://pixeldrain.com/u/${FILE_ID}
 - By: ${git_name}"
-    send_msg "${MSG}"
+        send_msg "${MSG}"
+    fi
 fi
