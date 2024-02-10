@@ -229,17 +229,15 @@ if [ "${installclean}" = "1" ]; then
 fi
 
 lunch ${lunch_target}
-${make_cmd} && echo "[*] Build completed successfully" && upload_rom || echo "[!] Build failed"
-
-# Send a final message
-echo "[*] Done!"
+${make_cmd} && echo "[*] Build completed successfully" && upload_rom || echo "[!] Build failed" && send_msg "Build failed for ${device_codename}
+-Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log" && exit 1
 
 # Send a message to the Telegram channel
 if [ "${TELEGRAM_TOKEN}" != "" ] && [ "${TELEGRAM_CHAT}" != "" ]; then
     if [ -z "${FILE_ID}" ]; then
         repo_branch=$(git rev-parse --abbrev-ref HEAD)
         MSG="Build for ${device_codename} finished
-- Download the ROM at: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/target/product/${device_codename}/${rom_zip}
+- Download the ROM at: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/target/product/${device_codename}/${zip_path}
 - By: ${git_name}"
         send_msg "${MSG}"
     else
