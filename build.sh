@@ -12,7 +12,13 @@ git config --global user.name "${git_name}"
 
 # Define main directory
 main_dir="$(readlink -f -- $(pwd))/rom"
-cd "${main_dir}"
+if [ -d "${main_dir}" ]; then
+    echo "[!] Main directory already exists"
+    cd "${main_dir}" || exit 1
+else
+    mkdir -p "${main_dir}"
+    cd "${main_dir}" || exit 1
+fi
 
 # Function to send Telegram messages
 send_msg() {
@@ -78,6 +84,19 @@ upload_rom() {
     fi
 }
 
+# Function to apply patches
+apply_patches() {
+    if [ -f "../patches.sh" ]; then
+        echo "[*] Applying patches"
+        cp ../patches.sh .
+        chmod +x patches.sh
+        ./patches.sh
+        rm patches.sh
+    else
+        echo "[!] No patches to apply"
+    fi
+}
+
 # Create the build directory if not already initialized
 if [ -f ".repo/manifest.xml" ]; then
     echo "[!] Repo already initialized"
@@ -87,7 +106,7 @@ else
     cd "${main_dir}" || exit 1
     # Init the repo
     echo "[*] Initializing the repo"
-    repo init -u "${repo}" -b "${repo_branch}" --depth=10
+    repo init -u "${repo}" -b "${repo_branch}" ${init_args}
 fi
 
 # Sync the repo if initialized
@@ -96,7 +115,7 @@ if [ -d ".repo" ]; then
         echo "[!] Skipping sync"
     else
         echo "[*] Syncing the repo"
-        repo sync "${sync_args}"
+        repo sync ${sync_args}
         apply_patches
     fi
 else
@@ -117,11 +136,13 @@ if [ -n "${extra_repos_clone}" ]; then
     IFS='|' read -r -a extra_repos_clone <<< "${extra_repos_clone}"
     IFS='|' read -r -a extra_repos_path <<< "${extra_repos_path}"
     IFS='|' read -r -a extra_repos_branch <<< "${extra_repos_branch}"
-    
+
     for index in "${!extra_repos_clone[@]}"; do
         repo_path="${main_dir}/${extra_repos_path[index]}"
         clone_repo "${repo_path}" "${extra_repos_clone[index]}" "Extra Repo ${extra_repos_path[index]}" "${extra_repos_branch[index]}"
-        update_repo "${repo_path}" "${extra_repos_branch[index]}" "Extra Repo ${extra_repos_path[index]}"
+        if [ "${should_update_trees}" = "1" ]; then
+            update_repo "${repo_path}" "${extra_repos_branch[index]}" "Extra Repo ${extra_repos_path[index]}"
+        fi
     done
 else
     echo "[!] No extra repos to clone"
@@ -135,17 +156,6 @@ if [ "${should_update_trees}" = "1" ]; then
     update_repo "${ims_vendor_tree_path}" "${ims_vendor_tree_branch}" "IMS Vendor repos"
     update_repo "${fw_vendor_tree_path}" "${fw_vendor_tree_branch}" "Firmware Vendor repos"
     update_repo "${kernel_tree_path}" "${kernel_tree_branch}" "Kernel repos"
-fi
-
-# Apply patches
-if [ -f "../patches.sh" ]; then
-    echo "[*] Applying patches"
-    cp ../patches.sh .
-    chmod +x patches.sh
-    ./patches.sh
-    rm patches.sh
-else
-    echo "[!] No patches to apply"
 fi
 
 # Clean the out directory if needed
