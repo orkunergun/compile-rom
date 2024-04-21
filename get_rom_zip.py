@@ -1,48 +1,38 @@
 import os
-import re
 from datetime import datetime
 
-# Get the directory path from the environment variable
+# Get the directory path and ROM name from the environment variables
 directory = os.environ.get('TARGET_DIR')
+rom_name = os.environ.get('ROM_NAME')
 
-if directory is None:
-    print("Error: TARGET_DIR environment variable is not set.")
+if directory is None or rom_name is None:
+    print("Error: TARGET_DIR or ROM_NAME environment variable is not set.")
     exit()
 
 # List files in the directory
 files = os.listdir(directory)
 
-# Define a regex pattern to match timestamps in the filenames
-pattern = r'\d{8}-\d{4}'
-
-# Initialize variables to store the closest timestamp and corresponding filename
-closest_timestamp = None
-closest_filename = None
-
-# Get current timestamp
-current_time = datetime.now()
+# Initialize variables to store the last updated timestamp and corresponding filename
+last_updated_timestamp = None
+last_updated_filename = None
 
 # Iterate over the files
 for filename in files:
-    # Check if the filename matches the pattern
-    match = re.search(pattern, filename)
-    if match:
-        # Extract the timestamp from the filename
-        timestamp_str = match.group()
-        # Convert timestamp string to datetime object
-        timestamp = datetime.strptime(timestamp_str, "%Y%m%d-%H%M")
-        # Calculate the time difference
-        time_difference = abs(current_time - timestamp)
-        # Update closest timestamp and filename if this one is closer
-        if closest_timestamp is None or time_difference < closest_timestamp:
-            closest_timestamp = time_difference
-            closest_filename = filename
+    # Check if the file is a zip file and contains the ROM name (case-insensitive)
+    if filename.endswith(".zip") and (rom_name.lower() in filename.lower() or rom_name.upper() in filename.upper()):
+        # Get the file path
+        file_path = os.path.join(directory, filename)
+        # Get the last modified timestamp of the file
+        modified_timestamp = os.path.getmtime(file_path)
+        # Convert timestamp to datetime object
+        modified_datetime = datetime.fromtimestamp(modified_timestamp)
+        # Update last updated timestamp and filename if this one is newer
+        if last_updated_timestamp is None or modified_datetime > last_updated_timestamp:
+            last_updated_timestamp = modified_datetime
+            last_updated_filename = filename
 
-# Remove every character after the zip extension
-closest_filename = closest_filename.split(".zip")[0] + ".zip"
-
-# Get the path of the closest zip file
-closest_filename = os.path.join(directory, closest_filename)
-
-# Print the closest zip filename
-print(closest_filename)
+# Print the last updated zip filename
+if last_updated_filename is not None:
+    print(os.path.join(directory, last_updated_filename))
+else:
+    print("No zip files found in the directory that contain the ROM name.")
