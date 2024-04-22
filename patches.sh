@@ -15,16 +15,16 @@ cd ../../..
 cd frameworks/av
 echo "[!] frameworks/av commits before"
 git log -n 6 --oneline
-git fetch https://github.com/xiaomi-begonia-dev/frameworks_av
-git cherry-pick 4c05700781409a0ba321adb8dc67e14ce918e52b^..72b8d3e9182b172ad0f161616c391b0b7ac59989 || git cherry-pick --skip
+git fetch https://github.com/begonia-dev/android_frameworks_av
+git cherry-pick 6a074a11bfe85c3fabcd84ff1ab0c270c3a37b61^..a92e88889bffca15c422b5011c20c22f6a25c45a || git cherry-pick --skip
 echo "[!] frameworks/av commits after"
 git log -n 6 --oneline
 cd ../..
 cd frameworks/native
 echo "[!] frameworks/native commits before"
 git log -n 6 --oneline
-git fetch https://github.com/xiaomi-begonia-dev/frameworks_native
-git cherry-pick d964eeba4146ab0045858a05604f5202b2e874d8 || git cherry-pick --skip
+git fetch https://github.com/begonia-dev/android_frameworks_native
+git cherry-pick 16eb76b5b1aa021dc3f00852c50a2f1fcf282088 || git cherry-pick --skip
 echo "[!] frameworks/native commits after"
 git log -n 6 --oneline
 cd ../..

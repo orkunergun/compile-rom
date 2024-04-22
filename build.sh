@@ -195,7 +195,6 @@ if [ "${installclean}" = "1" ]; then
     make installclean
 fi
 
-lunch "${lunch_target}"
 ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
 
 # If the build is successful, upload ROM
