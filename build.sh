@@ -139,10 +139,11 @@ if [ -n "${extra_repos_clone}" ]; then
     IFS='|' read -r -a extra_repos_clone <<< "${extra_repos_clone}"
     IFS='|' read -r -a extra_repos_path <<< "${extra_repos_path}"
     IFS='|' read -r -a extra_repos_branch <<< "${extra_repos_branch}"
+    IFS='|' read -r -a extra_repos_args <<< "${extra_repos_args}"
 
     for index in "${!extra_repos_clone[@]}"; do
         repo_path="${main_dir}/${extra_repos_path[index]}"
-        clone_repo "${repo_path}" "${extra_repos_clone[index]}" "Extra Repo ${extra_repos_path[index]}" "${extra_repos_branch[index]}"
+        clone_repo "${repo_path}" "${extra_repos_clone[index]}" "Extra Repo ${extra_repos_path[index]}" "${extra_repos_branch[index]}" ${extra_repos_args[index]}
         if [ "${should_update_trees}" = "1" ]; then
             update_repo "${repo_path}" "${extra_repos_branch[index]}" "Extra Repo ${extra_repos_path[index]}"
         fi
@@ -195,6 +196,7 @@ if [ "${installclean}" = "1" ]; then
     make installclean
 fi
 
+${lunch_cmd}
 ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
 
 # If the build is successful, upload ROM

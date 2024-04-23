@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Remove packages/apps/FMRadio as we use our own repo
+rm -rf packages/apps/FMRadio
+
 # Skip the cherry pick if the patch is already applied
 cd frameworks/av
 git cherry-pick --abort
