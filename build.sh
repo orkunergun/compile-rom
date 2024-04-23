@@ -193,11 +193,13 @@ cd "${main_dir}"
 # Do an installclean if needed
 if [ "${installclean}" = "1" ]; then
     echo "[*] Running installclean"
+    ${lunch_cmd}
     make installclean
+    ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
+else
+    ${lunch_cmd}
+    ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
 fi
-
-${lunch_cmd}
-${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
 
 # If the build is successful, upload ROM
 echo "[*] Build completed successfully"
