@@ -143,7 +143,7 @@ if [ -n "${extra_repos_clone}" ]; then
 
     for index in "${!extra_repos_clone[@]}"; do
         repo_path="${main_dir}/${extra_repos_path[index]}"
-        clone_repo "${repo_path}" "${extra_repos_clone[index]}" "Extra Repo ${extra_repos_path[index]}" "${extra_repos_branch[index]}" ${extra_repos_args[index]}
+        clone_repo "${repo_path}" "${extra_repos_clone[index]}" "Extra Repo ${extra_repos_path[index]}" "${extra_repos_branch[index]}"
         if [ "${should_update_trees}" = "1" ]; then
             update_repo "${repo_path}" "${extra_repos_branch[index]}" "Extra Repo ${extra_repos_path[index]}"
         fi
