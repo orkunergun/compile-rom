@@ -193,12 +193,26 @@ cd "${main_dir}"
 # Do an installclean if needed
 if [ "${installclean}" = "1" ]; then
     echo "[*] Running installclean"
-    ${lunch_cmd}
-    make installclean
-    ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
+    if [ "${use_brunch}" = "true" ]; then
+        skip_make=true
+        ${lunch_cmd}
+        make installclean
+        brunch "${device_codename}" || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
+    else
+        skip_make=false
+        ${lunch_cmd}
+        make installclean
+    fi
+    if [ "${skip_make}" != "true" ]; then
+        ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
+    fi
 else
-    ${lunch_cmd}
-    ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
+    if [ "${use_brunch}" = "true" ]; then
+        brunch "${device_codename}" || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
+    else
+        ${lunch_cmd}
+        ${make_cmd} || { echo "[!] Build failed"; send_msg "Build failed for ${device_codename} - Log: https://ci.erensprojects.me/job/${JOB_NAME}/ws/rom/out/error.log"; exit 1; }
+    fi
 fi
 
 # If the build is successful, upload ROM
