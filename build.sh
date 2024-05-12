@@ -78,9 +78,24 @@ upload_rom() {
         export ROM_NAME="PixelOS"
         zip_path="$(python3 ../get_rom_zip.py)"
         if [ -f "${zip_path}" ]; then
-            echo "[*] Uploading the ROM"
+            echo "[*] Uploading the ROM to PixelDrain"
             export FILE_ID="$(curl -sT "${zip_path}" https://pixeldrain.com/api/file/ | grep -o '"id":"[^"]*' | awk -F ':"' '{print $2}')"
             echo "[*] Download the ROM at: https://pixeldrain.com/u/${FILE_ID}"
+        else
+            echo "[!] No ROM to upload"
+        fi
+    fi
+    if [ "${ONEDRIVE_UPLOAD}" = "true" ]; then
+        cd "${main_dir}"
+        # Set the target directory
+        export TARGET_DIR="${main_dir}/out/target/product/${device_codename}"
+        # ROM name to be used in the python script to find the zip
+        zip_path="$(python3 ../get_rom_zip.py)"
+        if [ -f "${zip_path}" ]; then
+            echo "[*] Uploading the ROM to OneDrive"
+            sudo mkdir -p "/data/ROMs/${device_codename}/${rom_name}"
+            sudo cp "${zip_path}" "/data/ROMs/${device_codename}/${rom_name}/${zip_path##*/}"
+            echo "[*] Download the ROM at: ${onedrive_url}/ROMs/${device_codename}/${rom_name}/${zip_path##*/}"
         else
             echo "[!] No ROM to upload"
         fi
