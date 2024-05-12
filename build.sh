@@ -75,7 +75,7 @@ upload_rom() {
         # Set the target directory
         export TARGET_DIR="${main_dir}/out/target/product/${device_codename}"
         # ROM name to be used in the python script to find the zip
-        export ROM_NAME="astera"
+        export ROM_NAME="PixelOS"
         zip_path="$(python3 ../get_rom_zip.py)"
         if [ -f "${zip_path}" ]; then
             echo "[*] Uploading the ROM"
