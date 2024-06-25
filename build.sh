@@ -75,7 +75,7 @@ upload_rom() {
         # Set the target directory
         export TARGET_DIR="${main_dir}/out/target/product/${device_codename}"
         # ROM name to be used in the python script to find the zip
-        export ROM_NAME="PixelOS"
+        export ROM_NAME="${rom_name}"
         zip_path="$(python3 ../get_rom_zip.py)"
         if [ -f "${zip_path}" ]; then
             echo "[*] Uploading the ROM to PixelDrain"
@@ -124,7 +124,7 @@ else
     cd "${main_dir}" || exit 1
     # Init the repo
     echo "[*] Initializing the repo"
-    repo init -u "${repo}" -b "${repo_branch}" ${init_args}
+    repo init --depth=1 --no-repo-verify -u "${repo}" -b "${repo_branch}" ${init_args} -g default,-mips,-darwin,-notdefault
 fi
 
 # Sync the repo if initialized
@@ -133,7 +133,7 @@ if [ -d ".repo" ]; then
         echo "[!] Skipping sync"
     else
         echo "[*] Syncing the repo"
-        repo sync ${sync_args}
+        repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j30 || repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -q -j8
         apply_patches
     fi
 else
@@ -143,10 +143,9 @@ fi
 
 # Clone repositories
 clone_repo "${device_tree_path}" "${device_tree_clone}" "Device tree" "${device_tree_branch}"
-clone_repo "${sepolicy_tree_path}" "${sepolicy_tree_clone}" "Sepolicy tree" "${sepolicy_tree_branch}"
+clone_repo "${common_device_tree_path}" "${common_device_tree_clone}" "Common Device tree" "${common_device_tree_branch}"
+clone_repo "${sepolicy_vendor_tree_path}" "${sepolicy_vendor_tree_clone}" "Sepolicy tree" "${sepolicy_vendor_tree_branch}"
 clone_repo "${vendor_tree_path}" "${vendor_tree_clone}" "Vendor tree" "${vendor_tree_branch}" 15
-clone_repo "${ims_vendor_tree_path}" "${ims_vendor_tree_clone}" "IMS Vendor tree" "${ims_vendor_tree_branch}" 1
-clone_repo "${fw_vendor_tree_path}" "${fw_vendor_tree_clone}" "Firmware Vendor tree" "${fw_vendor_tree_branch}" 1
 clone_repo "${kernel_tree_path}" "${kernel_tree_clone}" "Kernel" "${kernel_tree_branch}" 250
 
 # Clone and update extra repos
@@ -170,10 +169,9 @@ fi
 # Update repositories if needed
 if [ "${should_update_trees}" = "1" ]; then
     update_repo "${device_tree_path}" "${device_tree_branch}" "Device repos"
-    update_repo "${sepolicy_tree_path}" "${sepolicy_tree_branch}" "Sepolicy repos"
+    update_repo "${common_device_tree_path}" "${common_device_tree_branch}" "Common Device repos"
+    update_repo "${sepolicy_vendor_tree_path}" "${sepolicy_vendor_tree_branch}" "Sepolicy repos"
     update_repo "${vendor_tree_path}" "${vendor_tree_branch}" "Vendor repos"
-    update_repo "${ims_vendor_tree_path}" "${ims_vendor_tree_branch}" "IMS Vendor repos"
-    update_repo "${fw_vendor_tree_path}" "${fw_vendor_tree_branch}" "Firmware Vendor repos"
     update_repo "${kernel_tree_path}" "${kernel_tree_branch}" "Kernel repos"
 fi
 
